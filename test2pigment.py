@@ -2,6 +2,130 @@ import mixbox
 from math import floor
 
 class PigmentColours():
+    """
+    Class that contains and converts between colour types
+
+    Internally has a single "source" colour type.
+    (ID, Flowers, Recipe, floatRGB, RGB, Brickcolour)
+    
+    Other colour types can be retrieved as properties.
+    The source type can be changed using to_* methods
+
+    Construct using PigmentColours.from_* methods, not PigmentColours()
+
+    Attributes:
+        square (function):  Lambda function which outputs coloured square
+                            string given RGB values. Takes 3 RGB integers
+                            (0-255)
+
+        frgb (read-only):   (float, float, float) 0-1 RGB
+                            If recipe or flowers source, this gives
+                            the raw result (unrounded)
+
+        id (read-only):     int, each digit repesents GBR 0-9, e.g. 900 
+                            corresponds to RGB(0,0,255) or 9 corresponds 
+                            to RGB(255,0,0). If source is brickcolour, 
+                            use ids instead.
+
+        flowers (read-only):    (R, Y, B, W) stores flower mix
+
+        recipe (read-only):     [int] stores recipe mix
+
+        rgb255 (read-only):     (int, int, int) 0-255 RGB
+                                If recipe or flowers source, this gives
+                                the raw result (unrounded)
+
+        brickcolourid (read-only):  int, Roblox's Brickcolour ID, based
+                                    off nearest pigment id
+
+        brickcolourname (read-only):    str, Roblox's Brickcolour Name,
+                                        based off nearest pigment id
+
+        ids (read-only):    list[int] of ids corresponding to brickcolour
+
+        hex (read-only):    str, RGB value in hexadecimal, with #
+                            If recipe or flowers source, this gives
+                            the raw result (unrounded)
+
+        colour_source (read-only):  str, name of colour source ("id",
+                                    "flowers", "recipe", frgb",
+                                    "rgb255", "brickcolourid")
+
+        colour_source_value (read-only):    int/tuple/list, the value of
+                                            the corresponding colour_source
+        
+    Constructor Classmethods:
+        Creates a new instance from specific type
+
+        from_id(id: int) -> PigmentColours
+        from_rgb_float(r: float, g: float, b: float) -> PigmentColours
+        from_rgb255(r255: int, g255: int, b255: int) -> PigmentColours
+        from_rgb_float(id:int) -> PigmentColours
+        from_hex(hex:str) -> PigmentColours
+        from_brickcolourname(brickcolour:str) -> PigmentColours
+        from_brickcolourid(cbrickcolourid:int) -> PigmentColours
+        from_flowers(R:int, Y:int, B:int, W:int) -> PigmentColours
+        from_recipe(recipe:list[int]) -> PigmentColours
+
+    Converter Staticmethods:
+        Converts between listed colour types, converting from brickcolour is a one
+        to many mapping so only brickcolour to pigment ids is supported.
+
+        hex_to_rgb255(hexv:str) -> tuple[int, int, int]
+        rgb255_to_hex(r255:int, g255:int, b255:int) -> str
+
+        brickcolourname_to_brickcolourid(name:str) -> int
+        brickcolourid_to_brickcolourname(bcid:int) -> str
+
+        frgb_to_rgb255(r:float, g:float, b:float) -> tuple[int, int, int]
+        rgb255_to_frgb(r255:int, g255:int, b255:int) -> tuple[float, float, float]
+
+        frgb_to_id(r:float, g:float, b:float) -> int
+        id_to_frgb(id:int) -> tuple[float, float, float]
+
+        id_to_rgb255(id:int) -> tuple[int, int, int]
+        flowers_to_frgb(rc:int, yc:int, bc:int, wc:int) -> tuple[float, float, float]
+        recipe_to_frgb(ids:list[int])
+
+        id_to_brickcolourid(id:int) -> int
+        
+        brickcolourid_to_ids(brickcolourid) -> list[int]
+
+    Source Change Methods
+        Changes source to a specific colour value type
+        (THIS MAY CHANGE VALUES OF OTHER ATTRIBUTES)
+
+        to_id(self)
+        to_frgb(self)
+        to_rgb255(self)
+        to_brickcolour(self)
+
+    Other Methods
+        __repr__(self) -> str
+            Returns display string containing 
+            colour square, hex, id, brickcolor, source name and source value
+
+        __sub__(self, colour2) -> PigmentColours
+            Returns result of subtraction by float RGB
+
+        __eq__(self, colour2) -> bool
+            Returns true if both self and compared value have the same colour type
+            and value of colour, false otherwise
+
+        @staticmethod
+        distance(colour1, colour2) -> float
+            Calculates pythagorean distance between 2 colour values in float RGB
+            
+        distance_to_id(self) -> float
+            Calculates pythagorean distance to corresponding id in float RGB
+            
+        print_recip_result(self) -> None
+            Displays direct mix result and id-rounded colours
+
+        print_colour(self) -> None
+            Displays colour square and other properties
+    """
+
     _ROUND_OFFSET = (0.2, 0.16, 0.25) # found by mapping in frgb colour space and comparing with test values
 
     _RED_FLOWER      = mixbox.rgb_to_latent((198, 57,  57))
@@ -28,8 +152,12 @@ class PigmentColours():
     
         self._brickcolourid = None
 
+    # CONSTRUCTORS
+
     @classmethod
     def from_id(cls, id:int):
+        """
+        """
         new = cls()
         new._id = id
         return new
@@ -76,10 +204,6 @@ class PigmentColours():
         new._recipe = recipe
         return new
     
-    # # Conversions
-    # # USE frgb AS A BASE
-    # # ALL COLOUR TYPES:
-    # # flowers, recipe, id, frgb, rgb255, hex, brickcolour name, brickcolour id
     # VALIDATIONS
 
     @staticmethod
@@ -174,15 +298,11 @@ class PigmentColours():
                 if not ismeowornot(arg):
                     raise TypeError(f"Arg {arg} is not int or list of ints")
 
-            # # Validate keyword arguments
-            # for key, value in kwargs.items():
-            #     if not ismeowornot(value):
-            #         raise TypeError(f"Kwarg {key}:{value} is not int or list of ints")
-
             return func(*args, **kwargs)
         
         return wrapper
 
+    ###### CONVERTERS
 
     # # completely analagous conversions
     
@@ -309,16 +429,8 @@ class PigmentColours():
     @_validate_brickcolourid
     def brickcolourid_to_ids(brickcolourid) -> list[int]:
         return PigmentColours._IDS_BY_BRICKCOLOURID[brickcolourid]
-
-    # property methods (@property)
-        self._id = None
-        self._flowers = None
-        self._recipe = None
-
-        self._frgb = None
-        self._rgb255 = None
     
-        self._brickcolourid = None
+    ##### PROPERTIES
 
     @property
     def frgb(self) -> tuple[float, float, float]: # type: ignore
@@ -382,7 +494,7 @@ class PigmentColours():
         if self._rgb255: return self._rgb255 
         if self._brickcolourid: return self._brickcolourid 
 
-    # convert methods (instance methods)
+    # source change methods (instance methods)
 
     def _clear_colour_attr(self):
         self._id = None
