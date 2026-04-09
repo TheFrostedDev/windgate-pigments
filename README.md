@@ -6,12 +6,8 @@ For the projootian
 
 - Tested to be around 85% accuracy, please check generated recipes before use
 
-
 # Dependencies
 Ensure that you have pymixbox (https://github.com/scrtwpns/mixbox/tree/master)
-
-# Usage
-Apologies for lack of documentation, docs will be added later when i am free.
 
 # Additional Credits
 Thanks to HappySunChild https://github.com/HappySunChild for help with initial understanding and for brickcolour list maps (https://github.com/HappySunChild/test2colouring)
